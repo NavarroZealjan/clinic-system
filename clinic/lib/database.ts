@@ -56,7 +56,6 @@ export const patientAPI = {
       const connection = await getConnection();
       const result = await connection.request().execute("GetAllPatients");
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return result.recordset.map((row: any) => ({
         id: row.Id,
         firstName: row.FirstName,
@@ -92,7 +91,6 @@ export const patientAPI = {
         .input("SearchTerm", sql.NVarChar(100), searchTerm)
         .execute("SearchPatients");
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return result.recordset.map((row: any) => ({
         id: row.Id,
         firstName: row.FirstName,

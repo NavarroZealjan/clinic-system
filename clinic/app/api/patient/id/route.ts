@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import sql from "mssql";
+import sql, { pool } from "mssql";
 
 // Database configuration
 const config = {
@@ -22,27 +22,27 @@ export async function PUT(
     const patient = await request.json();
     const patientId = Number.parseInt(params.id);
 
-    await sql.connect(config);
+    const pool = await sql.connect(config);
 
-    await sql.query`
+    await pool.query(`
       EXEC UpdatePatient 
         @Id = ${patientId},
-        @FirstName = ${patient.firstName},
-        @LastName = ${patient.lastName},
-        @DateOfBirth = ${patient.dateOfBirth},
-        @Gender = ${patient.gender},
-        @Phone = ${patient.phone},
-        @Email = ${patient.email},
-        @Address = ${patient.address},
-        @BloodType = ${patient.bloodType},
-        @Allergies = ${patient.allergies},
-        @EmergencyContact = ${patient.emergencyContact},
-        @EmergencyPhone = ${patient.emergencyPhone},
-        @InsuranceProvider = ${patient.insuranceProvider},
-        @InsuranceNumber = ${patient.insuranceNumber},
-        @MedicalHistory = ${patient.medicalHistory},
-        @Status = ${patient.status}
-    `;
+        @FirstName = '${patient.firstName}',
+        @LastName = '${patient.lastName}',
+        @DateOfBirth = '${patient.dateOfBirth}',
+        @Gender = '${patient.gender}',
+        @Phone = '${patient.phone}',
+        @Email = '${patient.email}',
+        @Address = '${patient.address}',
+        @BloodType = '${patient.bloodType}',
+        @Allergies = '${patient.allergies}',
+        @EmergencyContact = '${patient.emergencyContact}',
+        @EmergencyPhone = '${patient.emergencyPhone}',
+        @InsuranceProvider = '${patient.insuranceProvider}',
+        @InsuranceNumber = '${patient.insuranceNumber}',
+        @MedicalHistory = '${patient.medicalHistory}',
+        @Status = '${patient.status}'
+    `);
 
     return NextResponse.json({
       id: patientId,
@@ -56,7 +56,9 @@ export async function PUT(
       { status: 500 }
     );
   } finally {
-    await sql.close();
+    if (pool) {
+      await pool.close();
+    }
   }
 }
 
@@ -67,10 +69,9 @@ export async function DELETE(
 ) {
   try {
     const patientId = Number.parseInt(params.id);
+    const pool = await sql.connect(config);
 
-    await sql.connect(config);
-
-    await sql.query`EXEC DeletePatient @Id = ${patientId}`;
+    await pool.query(`EXEC DeletePatient @Id = ${patientId}`);
 
     return NextResponse.json({ message: "Patient deleted successfully" });
   } catch (error) {
@@ -80,6 +81,8 @@ export async function DELETE(
       { status: 500 }
     );
   } finally {
-    await sql.close();
+    if (pool) {
+      await pool.close();
+    }
   }
 }

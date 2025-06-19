@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import sql from "mssql";
+import sql, { pool } from "mssql";
 
 // Database configuration
 const config = {
@@ -19,15 +19,15 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const searchTerm = searchParams.get("search");
 
-    await sql.connect(config);
+    const pool = await sql.connect(config);
 
     let result;
     if (searchTerm) {
-      result = await sql.query`
+      result = await pool.query`
         EXEC SearchPatients @SearchTerm = ${searchTerm}
       `;
     } else {
-      result = await sql.query`EXEC GetAllPatients`;
+      result = await pool.query`EXEC GetAllPatients`;
     }
 
     const patients = result.recordset.map((row) => ({
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   } finally {
-    await sql.close();
+    if (typeof pool !== "undefined") await pool.close();
   }
 }
 
@@ -68,9 +68,9 @@ export async function POST(request: NextRequest) {
   try {
     const patient = await request.json();
 
-    await sql.connect(config);
+    const pool = await sql.connect(config);
 
-    const result = await sql.query`
+    const result = await pool.query`
       EXEC AddPatient 
         @FirstName = ${patient.firstName},
         @LastName = ${patient.lastName},
@@ -103,6 +103,6 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   } finally {
-    await sql.close();
+    if (typeof pool !== "undefined") await pool.close();
   }
 }
